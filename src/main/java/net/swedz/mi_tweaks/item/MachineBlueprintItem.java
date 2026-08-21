@@ -26,6 +26,8 @@ import net.swedz.mi_tweaks.MITweaksItems;
 import net.swedz.mi_tweaks.MITweaksOtherRegistries;
 import net.swedz.mi_tweaks.blueprint.BlueprintsLearned;
 import net.swedz.mi_tweaks.network.packet.UpdateBlueprintsLearnedPacket;
+import net.swedz.tesseract.neoforge.proxy.Proxies;
+import net.swedz.tesseract.neoforge.proxy.builtin.TesseractProxy;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,12 +45,37 @@ public final class MachineBlueprintItem extends Item
 	@Override
 	public Component getName(ItemStack stack)
 	{
-		return super.getName(stack);
+		if(getMachineBlock(stack).isPresent())
+		{
+			return super.getName(stack);
+		}
+		else
+		{
+			return Component.translatable(this.getDescriptionId() + ".blank");
+		}
 	}
 
 	@Override
 	public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines, TooltipFlag isAdvanced)
 	{
+		TesseractProxy proxy = Proxies.get(TesseractProxy.class);
+
+		if(proxy.isClient())
+		{
+			Player player = proxy.getClientPlayer();
+
+			getMachineBlock(stack).ifPresent((machineBlock) ->
+			{
+				lines.add(MITweaks.text().blueprintMachine(machineBlock));
+
+				if(player != null &&
+				   MITweaks.config().machineBlueprints().learning() &&
+				   !hasBlueprintLearned(player, machineBlock))
+				{
+					lines.add(MITweaks.text().blueprintLearn("use"));
+				}
+			});
+		}
 	}
 
 	private static Optional<ItemStack> getItemStackMatchingFromInventory(SimpleMember member, Player player)
@@ -80,7 +107,8 @@ public final class MachineBlueprintItem extends Item
 		{
 			Block machineBlock = machineBlockOptional.get();
 
-			BlueprintsLearned blueprintsLearned = player.getData(MITweaksOtherRegistries.BLUEPRINTS_LEARNED);
+			BlueprintsLearned blueprintsLearned =
+					player.getData(MITweaksOtherRegistries.BLUEPRINTS_LEARNED);
 
 			if(!blueprintsLearned.hasLearned(machineBlock))
 			{
