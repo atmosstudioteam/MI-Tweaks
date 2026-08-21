@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      MOD_VERSION: 1.9.4-6
+      MOD_VERSION: 1.9.4-atmos.1
 
     steps:
       - name: Checkout repository
@@ -30,11 +30,11 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x gradlew
 
-      - name: Build MI Tweaks
+      - name: Build MI Tweaks Forked
         run: ./gradlew build
 
       - name: Upload JAR
         uses: actions/upload-artifact@v4
         with:
-          name: MI-Tweaks-build
+          name: MI-Tweaks-Forked-build
           path: build/libs/*.jar
