@@ -1,6 +1,0 @@
-{
-  "parent": "minecraft:item/generated",
-  "textures": {
-    "layer0": "mi_tweaks:item/machine_blueprint"
-  }
-}
