@@ -47,7 +47,7 @@ public final class MachineBlueprintItem extends Item
 	@Override
 	public Component getName(ItemStack stack)
 	{
-		return stack.has(MITweaksComponents.MACHINE_BLOCK) ?
+		return getMachineBlock(stack).isPresent() ?
 				super.getName(stack) :
 				Component.translatable(this.getDescriptionId() + ".blank");
 	}
@@ -55,12 +55,13 @@ public final class MachineBlueprintItem extends Item
 	@Override
 	public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines, TooltipFlag isAdvanced)
 	{
-		Block machine = stack.get(MITweaksComponents.MACHINE_BLOCK);
-		if(!(machine instanceof MachineBlock machineBlock))
+		Optional<Block> machineBlockOptional = getMachineBlock(stack);
+		if(machineBlockOptional.isEmpty())
 		{
 			return;
 		}
 		
+		Block machineBlock = machineBlockOptional.get();
 		lines.add(machineBlock.getName().copy().withStyle(DEFAULT_STYLE));
 		
 		if(!MITweaks.config().machineBlueprints().learning())
