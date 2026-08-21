@@ -45,7 +45,7 @@ public final class MITweaksOtherRegistries
 							
 							if(item.asItem() instanceof MachineBlueprintItem)
 							{
-								MITweaks.config().machineBlueprints().machines().stream()
+								MITweaks.blueprintMachines().stream()
 										.sorted(Comparator.comparing(BuiltInRegistries.BLOCK::getKey))
 										.forEach((machineBlock) ->
 										{
