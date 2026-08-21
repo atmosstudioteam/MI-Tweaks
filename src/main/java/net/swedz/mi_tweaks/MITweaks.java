@@ -68,7 +68,7 @@ public final class MITweaks
 	}
 	
 	private static MITweaksConfig CONFIG;
-	private static MITweaksConfig.MachineList BLUEPRINT_MACHINES;
+	private static volatile MITweaksConfig.MachineList BLUEPRINT_MACHINES;
 	
 	public static MITweaksConfig config()
 	{
