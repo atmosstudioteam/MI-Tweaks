@@ -64,7 +64,6 @@ public final class MITweaks
 		
 		bus.addListener(RegisterCapabilitiesEvent.class, (event) -> CapabilitiesListeners.triggerAll(ID, event));
 		bus.addListener(RegisterPayloadHandlersEvent.class, MITweaksPackets::init);
-		
 		bus.addListener(RegisterDataMapTypesEvent.class, MITweaksDataMaps::init);
 	}
 	
@@ -103,7 +102,11 @@ public final class MITweaks
 		var instance = new ConfigManager(file)
 				.build(MITweaksConfig.class)
 				.load();
-		bus.addListener(FMLCommonSetupEvent.class, (event) -> instance.load(false));
+		bus.addListener(FMLCommonSetupEvent.class, (event) ->
+		{
+			instance.load(false);
+			BLUEPRINT_MACHINES = null;
+		});
 		CONFIG = instance.config();
 	}
 	
@@ -122,21 +125,16 @@ public final class MITweaks
 				.style("tooltip", () -> DEFAULT_STYLE)
 				.style("tooltip_subtext", () -> DEFAULT_STYLE.withItalic(true))
 				.style("highlighted", () -> HIGHLIGHT_STYLE)
-				
 				.builtinParsers()
 				.parser(SurroundingArea.class, () -> SurroundingArea::text)
-				
 				.parser("percentage", float.class, () -> (value) -> Parser.FLOAT_PERCENTAGE.parse(value, 0))
 				.parser("percentage.1", float.class, () -> (value) -> Parser.FLOAT_PERCENTAGE.parse(value, 1))
-				
 				.parser("eu_per_tick", long.class, () -> (value) ->
 				{
 					var amount = TextHelper.getAmountGeneric(value);
 					return MIText.EuT.text(amount.digit(), amount.unit());
 				})
-				
 				.parser("short", CableTier.class, () -> MIParser.CABLE_TIER_SHORT)
-				
 				.parser(ElectricBlastFurnaceBlockEntity.Tier.class, () -> ElectricBlastFurnaceBlockEntity.Tier::getDisplayName)
 				.parser(MachineTier.class, () -> (tier) -> (switch (tier)
 				{
@@ -146,7 +144,6 @@ public final class MITweaks
 					case MULTIBLOCK -> TEXT.machineTierMultiblockElectric();
 					case UNLIMITED -> TEXT.machineTierUnlimited();
 				}))
-				
 				.build(MITweaksText.class)
 				.load();
 		LanguageDatagenProvider.include(instance);
