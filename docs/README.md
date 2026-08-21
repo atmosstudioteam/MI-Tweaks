@@ -1,6 +1,9 @@
 # Documentation
 
-This is the documentation for MI Tweaks.
+This directory contains the MI Tweaks feature documentation inherited from the original project.
 
-For any questions or feature suggestions, please come chat in the `#mi-tweaks`
-on [my discord](https://discord.gg/vNaqDzSNaB).
+The Atmos Studio fork keeps the original features and `mi_tweaks` mod ID while adding performance fixes for Machine Blueprint GUI paths.
+
+Original project: [Swedz/MI-Tweaks](https://github.com/Swedz/MI-Tweaks)
+
+Fork repository: [atmosstudioteam/MI-Tweaks](https://github.com/atmosstudioteam/MI-Tweaks)
