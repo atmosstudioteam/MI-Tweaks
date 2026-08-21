@@ -11,6 +11,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    env:
+      MOD_VERSION: 1.9.4-atmos.1
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
