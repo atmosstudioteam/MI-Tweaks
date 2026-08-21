@@ -55,9 +55,10 @@ public final class EmiCopyBlueprintRecipe extends EmiPatternCraftingRecipe
 	private EmiStack generateBlueprintItem(Random random)
 	{
 		ItemStack blueprintItem = MITweaksItems.MACHINE_BLUEPRINT.asItem().getDefaultInstance();
-		if(!MITweaks.blueprintMachines().isEmpty())
+		var machines = MITweaks.blueprintMachines();
+		if(!machines.isEmpty())
 		{
-			Block machineBlock = MITweaks.blueprintMachines().get(random.nextInt(MITweaks.blueprintMachines().size()));
+			Block machineBlock = machines.get(random.nextInt(machines.size()));
 			MachineBlueprintItem.setMachineBlock(blueprintItem, machineBlock);
 		}
 		return EmiStack.of(blueprintItem);
