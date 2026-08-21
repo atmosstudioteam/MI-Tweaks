@@ -69,6 +69,7 @@ public final class MITweaks
 	}
 	
 	private static MITweaksConfig CONFIG;
+	private static MITweaksConfig.MachineList BLUEPRINT_MACHINES;
 	
 	public static MITweaksConfig config()
 	{
@@ -78,6 +79,15 @@ public final class MITweaks
 			setupConfig(container.getEventBus(), container);
 		}
 		return CONFIG;
+	}
+	
+	public static MITweaksConfig.MachineList blueprintMachines()
+	{
+		if(BLUEPRINT_MACHINES == null)
+		{
+			BLUEPRINT_MACHINES = config().machineBlueprints().machines();
+		}
+		return BLUEPRINT_MACHINES;
 	}
 	
 	private static void setupConfig(IEventBus bus, ModContainer container)
