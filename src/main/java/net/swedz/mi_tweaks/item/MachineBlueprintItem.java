@@ -35,6 +35,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import static aztech.modern_industrialization.MITooltips.DEFAULT_STYLE;
+
 public final class MachineBlueprintItem extends Item
 {
 	public MachineBlueprintItem(Properties properties)
@@ -45,50 +47,114 @@ public final class MachineBlueprintItem extends Item
 	@Override
 	public Component getName(ItemStack stack)
 	{
-		if(getMachineBlock(stack).isPresent())
+		/*
+		 * Для отображения имени нам не нужно каждый кадр вызывать
+		 * getMachineBlock(), который дополнительно проверяет список
+		 * машин в конфиге.
+		 *
+		 * Наличие компонента уже достаточно, чтобы понять,
+		 * является ли blueprint пустым.
+		 */
+		if(stack.has(MITweaksComponents.MACHINE_BLOCK))
 		{
 			return super.getName(stack);
 		}
-		else
-		{
-			return Component.translatable(this.getDescriptionId() + ".blank");
-		}
+
+		return Component.translatable(this.getDescriptionId() + ".blank");
 	}
 
 	@Override
-	public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines, TooltipFlag isAdvanced)
+	public void appendHoverText(
+			ItemStack stack,
+			TooltipContext context,
+			List<Component> lines,
+			TooltipFlag isAdvanced
+	)
 	{
+		/*
+		 * Tooltip вызывается постоянно, пока курсор находится
+		 * над предметом.
+		 *
+		 * Поэтому здесь намеренно НЕ используется getMachineBlock():
+		 * он создаёт Optional и каждый раз проверяет
+		 * machineBlueprints().machines().contains(...).
+		 */
+		Block machine = stack.get(MITweaksComponents.MACHINE_BLOCK);
+
+		if(!(machine instanceof MachineBlock machineBlock))
+		{
+			return;
+		}
+
+		/*
+		 * Раньше:
+		 *
+		 * MITweaks.text().blueprintMachine(machineBlock)
+		 *
+		 * Это прогоняло Block через Tesseract LangManager/parser,
+		 * хотя сама строка blueprint_machine фактически равна "%s".
+		 *
+		 * Название блока можно получить напрямую.
+		 */
+		lines.add(
+				machineBlock
+						.getName()
+						.copy()
+						.withStyle(DEFAULT_STYLE)
+		);
+
+		/*
+		 * Всё, что ниже, вообще не выполняется,
+		 * если learning отключён.
+		 */
+		if(!MITweaks.config().machineBlueprints().learning())
+		{
+			return;
+		}
+
 		TesseractProxy proxy = Proxies.get(TesseractProxy.class);
 
-		if(proxy.isClient())
+		if(!proxy.isClient())
 		{
-			Player player = proxy.getClientPlayer();
+			return;
+		}
 
-			getMachineBlock(stack).ifPresent((machineBlock) ->
-			{
-				lines.add(MITweaks.text().blueprintMachine(machineBlock));
+		Player player = proxy.getClientPlayer();
 
-				if(player != null &&
-				   MITweaks.config().machineBlueprints().learning() &&
-				   !hasBlueprintLearned(player, machineBlock))
-				{
-					lines.add(MITweaks.text().blueprintLearn("use"));
-				}
-			});
+		if(player != null && !hasBlueprintLearned(player, machineBlock))
+		{
+			/*
+			 * Эту строку пока оставляем через Tesseract,
+			 * потому что parser "keybind" корректно отображает
+			 * реально назначенную клавишу Use.
+			 */
+			lines.add(MITweaks.text().blueprintLearn("use"));
 		}
 	}
 
-	private static Optional<ItemStack> getItemStackMatchingFromInventory(SimpleMember member, Player player)
+	private static Optional<ItemStack> getItemStackMatchingFromInventory(
+			SimpleMember member,
+			Player player
+	)
 	{
 		if(player.isCreative())
 		{
-			return Optional.of(member.getPreviewState().getBlock().asItem().getDefaultInstance());
+			return Optional.of(
+					member
+							.getPreviewState()
+							.getBlock()
+							.asItem()
+							.getDefaultInstance()
+			);
 		}
 
 		for(ItemStack item : player.getInventory().items)
 		{
 			if(item.getItem() instanceof BlockItem blockItem &&
-			   member.matchesState(blockItem.getBlock().defaultBlockState(), null))
+			   member.matchesState(
+					   blockItem.getBlock().defaultBlockState(),
+					   null
+			   ))
 			{
 				return Optional.of(item);
 			}
@@ -98,9 +164,14 @@ public final class MachineBlueprintItem extends Item
 	}
 
 	@Override
-	public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand usedHand)
+	public InteractionResultHolder<ItemStack> use(
+			Level level,
+			Player player,
+			InteractionHand usedHand
+	)
 	{
 		ItemStack stack = player.getItemInHand(usedHand);
+
 		Optional<Block> machineBlockOptional = getMachineBlock(stack);
 
 		if(machineBlockOptional.isPresent())
@@ -108,7 +179,9 @@ public final class MachineBlueprintItem extends Item
 			Block machineBlock = machineBlockOptional.get();
 
 			BlueprintsLearned blueprintsLearned =
-					player.getData(MITweaksOtherRegistries.BLUEPRINTS_LEARNED);
+					player.getData(
+							MITweaksOtherRegistries.BLUEPRINTS_LEARNED
+					);
 
 			if(!blueprintsLearned.hasLearned(machineBlock))
 			{
@@ -139,7 +212,10 @@ public final class MachineBlueprintItem extends Item
 	}
 
 	@Override
-	public InteractionResult onItemUseFirst(ItemStack stack, UseOnContext context)
+	public InteractionResult onItemUseFirst(
+			ItemStack stack,
+			UseOnContext context
+	)
 	{
 		Player player = context.getPlayer();
 		InteractionHand usedHand = context.getHand();
@@ -152,7 +228,8 @@ public final class MachineBlueprintItem extends Item
 			Block machineBlock = machineBlockOptional.get();
 
 			if(level.getBlockState(context.getClickedPos()).is(machineBlock) &&
-			   level.getBlockEntity(context.getClickedPos()) instanceof MultiblockMachineBlockEntity multiblockMachine &&
+			   level.getBlockEntity(context.getClickedPos())
+					   instanceof MultiblockMachineBlockEntity multiblockMachine &&
 			   !multiblockMachine.isShapeValid())
 			{
 				ShapeMatcher matcher = new ShapeMatcher(
@@ -163,24 +240,31 @@ public final class MachineBlueprintItem extends Item
 						multiblockMachine.shapeValid
 				);
 
-				List<BlockPos> sortedPositions = new ArrayList<>(matcher.getPositions());
+				List<BlockPos> sortedPositions =
+						new ArrayList<>(matcher.getPositions());
+
 				Collections.sort(sortedPositions);
 
 				for(BlockPos pos : sortedPositions)
 				{
-					SimpleMember member = matcher.getSimpleMember(pos);
+					SimpleMember member =
+							matcher.getSimpleMember(pos);
 
 					if(!matcher.matches(pos, level) &&
 					   level.getBlockState(pos).isAir())
 					{
 						Optional<ItemStack> memberStackOptional =
-								getItemStackMatchingFromInventory(member, player);
+								getItemStackMatchingFromInventory(
+										member,
+										player
+								);
 
 						if(memberStackOptional.isPresent())
 						{
 							if(!level.isClientSide)
 							{
-								ItemStack memberStack = memberStackOptional.get();
+								ItemStack memberStack =
+										memberStackOptional.get();
 
 								level.setBlock(
 										pos,
@@ -208,7 +292,10 @@ public final class MachineBlueprintItem extends Item
 		return InteractionResult.PASS;
 	}
 
-	public static void setMachineBlock(ItemStack stack, Block machineBlock)
+	public static void setMachineBlock(
+			ItemStack stack,
+			Block machineBlock
+	)
 	{
 		if(!stack.is(MITweaksItems.MACHINE_BLUEPRINT.asItem()))
 		{
@@ -224,14 +311,20 @@ public final class MachineBlueprintItem extends Item
 			);
 		}
 
-		if(!MITweaks.config().machineBlueprints().machines().contains(machineBlock))
+		if(!MITweaks.config()
+				.machineBlueprints()
+				.machines()
+				.contains(machineBlock))
 		{
 			throw new IllegalArgumentException(
 					"Cannot set machine block value to a machine block that is not included in the config"
 			);
 		}
 
-		stack.set(MITweaksComponents.MACHINE_BLOCK, machineBlock);
+		stack.set(
+				MITweaksComponents.MACHINE_BLOCK,
+				machineBlock
+		);
 	}
 
 	public static Optional<Block> getMachineBlock(ItemStack stack)
@@ -245,10 +338,14 @@ public final class MachineBlueprintItem extends Item
 
 		if(stack.has(MITweaksComponents.MACHINE_BLOCK))
 		{
-			Block machine = stack.get(MITweaksComponents.MACHINE_BLOCK);
+			Block machine =
+					stack.get(MITweaksComponents.MACHINE_BLOCK);
 
 			if(machine instanceof MachineBlock machineBlock &&
-			   MITweaks.config().machineBlueprints().machines().contains(machineBlock))
+			   MITweaks.config()
+					   .machineBlueprints()
+					   .machines()
+					   .contains(machineBlock))
 			{
 				return Optional.of(machine);
 			}
@@ -257,7 +354,10 @@ public final class MachineBlueprintItem extends Item
 		return Optional.empty();
 	}
 
-	private static boolean hasBlueprintInInventory(Player player, Block machineBlock)
+	private static boolean hasBlueprintInInventory(
+			Player player,
+			Block machineBlock
+	)
 	{
 		Inventory playerInventory = player.getInventory();
 
@@ -267,22 +367,32 @@ public final class MachineBlueprintItem extends Item
 				)
 				.anyMatch((stack) ->
 				{
-					if(stack.getItem().equals(MITweaksItems.MACHINE_BLUEPRINT.asItem()))
+					if(stack.getItem().equals(
+							MITweaksItems.MACHINE_BLUEPRINT.asItem()
+					))
 					{
-						Optional<Block> machineBlockOptional = getMachineBlock(stack);
+						Optional<Block> machineBlockOptional =
+								getMachineBlock(stack);
 
 						return machineBlockOptional.isPresent() &&
-							   machineBlockOptional.get().equals(machineBlock);
+							   machineBlockOptional
+									   .get()
+									   .equals(machineBlock);
 					}
 
 					return false;
 				});
 	}
 
-	private static boolean hasBlueprintLearned(Player player, Block machineBlock)
+	private static boolean hasBlueprintLearned(
+			Player player,
+			Block machineBlock
+	)
 	{
 		BlueprintsLearned blueprintsLearned =
-				player.getData(MITweaksOtherRegistries.BLUEPRINTS_LEARNED);
+				player.getData(
+						MITweaksOtherRegistries.BLUEPRINTS_LEARNED
+				);
 
 		return blueprintsLearned.hasLearned(machineBlock);
 	}
@@ -296,11 +406,28 @@ public final class MachineBlueprintItem extends Item
 		return switch (requiredMode)
 		{
 			case DISABLED -> true;
-			case INVENTORY -> hasBlueprintInInventory(player, machineBlock);
-			case LEARN -> hasBlueprintLearned(player, machineBlock);
+
+			case INVENTORY ->
+					hasBlueprintInInventory(
+							player,
+							machineBlock
+					);
+
+			case LEARN ->
+					hasBlueprintLearned(
+							player,
+							machineBlock
+					);
+
 			case INVENTORY_OR_LEARN ->
-					hasBlueprintLearned(player, machineBlock) ||
-					hasBlueprintInInventory(player, machineBlock);
+					hasBlueprintLearned(
+							player,
+							machineBlock
+					) ||
+					hasBlueprintInInventory(
+							player,
+							machineBlock
+					);
 		};
 	}
 }
