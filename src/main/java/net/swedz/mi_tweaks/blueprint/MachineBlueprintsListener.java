@@ -29,16 +29,17 @@ public final class MachineBlueprintsListener
 	private static void onUseItemOnBlock(UseItemOnBlockEvent event)
 	{
 		Player player = event.getPlayer();
+		var requiredMode = MITweaks.config().machineBlueprints().required().placing();
 		if(player != null &&
-		   MITweaks.config().machineBlueprints().required().placing().isEnabled() &&
+		   requiredMode.isEnabled() &&
 		   event.getUsePhase() == UseItemOnBlockEvent.UsePhase.ITEM_BEFORE_BLOCK &&
 		   event.getUseOnContext().getItemInHand().getItem() instanceof BlockItem blockItem &&
 		   blockItem.getBlock() instanceof MachineBlock machineBlock &&
-		   MITweaks.config().machineBlueprints().machines().contains(machineBlock) &&
-		   !MachineBlueprintItem.hasBlueprint(player, machineBlock, MITweaks.config().machineBlueprints().required().placing()))
+		   MITweaks.blueprintMachines().contains(machineBlock) &&
+		   !MachineBlueprintItem.hasBlueprint(player, machineBlock, requiredMode))
 		{
 			event.cancelWithResult(ItemInteractionResult.CONSUME);
-			player.displayClientMessage(MITweaks.config().machineBlueprints().required().placing().tooltip(), true);
+			player.displayClientMessage(requiredMode.tooltip(), true);
 		}
 	}
 }
