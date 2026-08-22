@@ -8,9 +8,9 @@ This fork keeps the original `mi_tweaks` mod ID so it can be used as a drop-in r
 
 The 1.21.1 fork fixes severe Machine Blueprint GUI slowdowns caused by repeatedly resolving `machine_blueprints.machines`. Resolving that config value reconstructs `MachineList`, including regex matching against the Minecraft block registry, so doing it from tooltip and EMI render paths can become extremely expensive in large modpacks.
 
-The resolved machine list is cached and shared by blueprint validation, tooltips, creative-tab variants, placement checks, and the EMI blueprint-copy recipe.
+The resolved machine list is cached and shared by blueprint validation, tooltips, creative-tab variants, placement checks, the Machine Blueprint overlay renderer, and the EMI blueprint-copy recipe.
 
-The Machine Blueprint item also uses the regular generated item model instead of the previous custom block-overlay item renderer.
+The original Machine Blueprint controller-block overlay is retained. Its renderer now reads blueprint data through the cached machine list instead of repeatedly rebuilding the startup config value during item rendering.
 
 ## Documentation
 
