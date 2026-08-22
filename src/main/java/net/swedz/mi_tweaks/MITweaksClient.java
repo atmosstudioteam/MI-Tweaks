@@ -9,6 +9,7 @@ import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.client.resources.model.ModelResourceLocation;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.api.distmarker.Dist;
@@ -25,9 +26,9 @@ import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsE
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.swedz.mi_tweaks.compat.mi.custom.MITweaksMIRegistries;
-import net.swedz.mi_tweaks.item.MachineBlueprintItem;
 import net.swedz.mi_tweaks.item.renderer.BlockOverlayingItemRenderer;
 
+import java.util.Optional;
 import java.util.stream.Stream;
 
 @Mod(value = MITweaks.ID, dist = Dist.CLIENT)
@@ -45,11 +46,22 @@ public final class MITweaksClient
 							@Override
 							public BlockEntityWithoutLevelRenderer getCustomRenderer()
 							{
-								return new BlockOverlayingItemRenderer(RAW_ITEM_MODEL_LOCATION, MachineBlueprintItem::getMachineBlock);
+								return new BlockOverlayingItemRenderer(RAW_ITEM_MODEL_LOCATION, MITweaksClient::getMachineBlockForRendering);
 							}
 						},
 						MITweaksItems.MACHINE_BLUEPRINT.asItem()
 				));
+	}
+
+	private static Optional<Block> getMachineBlockForRendering(ItemStack stack)
+	{
+		if(!stack.has(MITweaksComponents.MACHINE_BLOCK))
+		{
+			return Optional.empty();
+		}
+
+		Block machineBlock = stack.get(MITweaksComponents.MACHINE_BLOCK);
+		return machineBlock instanceof MachineBlock ? Optional.of(machineBlock) : Optional.empty();
 	}
 
 	@SubscribeEvent
