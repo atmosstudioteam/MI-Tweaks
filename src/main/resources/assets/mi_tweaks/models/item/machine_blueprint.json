@@ -1,6 +1,4 @@
 {
-  "parent": "minecraft:item/generated",
-  "textures": {
-    "layer0": "mi_tweaks:item/machine_blueprint"
-  }
+  "parent": "minecraft:builtin/entity",
+  "gui_light": "front"
 }
